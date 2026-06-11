@@ -1,0 +1,10 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Investigation artifact (1.17MB raw scrape dump)
+probe_raw.html
+
+# OS / editor
+.DS_Store

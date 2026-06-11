@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GO WILD Finder</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121b2e; --panel2:#0f1828; --line:#22304a;
+    --text:#e8eefc; --muted:#8aa0c4; --accent:#13c27b; --accent2:#1ea7ff;
+    --warn:#ffb020; --danger:#ff6b6b; --chip:#1b2a44;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       background:var(--bg);color:var(--text)}
+  header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;
+         align-items:center;gap:14px}
+  header h1{font-size:18px;margin:0;letter-spacing:.3px}
+  header .tag{color:#04110a;background:var(--accent);font-weight:700;font-size:11px;
+              padding:3px 8px;border-radius:6px}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 24px 80px}
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{padding:9px 16px;border:1px solid var(--line);background:var(--panel2);
+       color:var(--muted);border-radius:9px;cursor:pointer;font-weight:600}
+  .tab.active{background:var(--panel);color:var(--text);border-color:var(--accent)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:12px;color:var(--muted);font-weight:600}
+  input,select{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+       padding:9px 11px;border-radius:9px;font-size:14px;min-width:90px}
+  input:focus,select:focus{outline:none;border-color:var(--accent2)}
+  .btn{background:var(--accent);color:#04110a;border:none;font-weight:700;padding:11px 20px;
+       border-radius:10px;cursor:pointer;font-size:14px}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .filters{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+  .filters .row{align-items:center}
+  .check{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text);
+         background:var(--chip);padding:8px 11px;border-radius:9px;cursor:pointer;
+         border:1px solid var(--line)}
+  .check input{min-width:auto}
+  .small{font-size:12px;color:var(--muted)}
+  .status{margin:18px 0 10px;color:var(--muted);font-size:13px;min-height:20px}
+  .status b{color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:10px 10px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;
+     letter-spacing:.5px;cursor:pointer;user-select:none}
+  tr:hover td{background:#0e1726}
+  .times{font-weight:700;font-size:14px}
+  .route{color:var(--muted)}
+  .apt{border-bottom:1px dotted var(--muted);cursor:help}
+  .apt:hover{color:var(--accent2);border-bottom-color:var(--accent2)}
+  .badge{display:inline-block;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:700}
+  .b-gw{background:var(--accent);color:#04110a}
+  .b-over{background:#3a2a12;color:var(--warn)}
+  .b-lay{background:#3a1a1a;color:var(--danger)}
+  .b-ns{background:#13314a;color:var(--accent2)}
+  .seats{color:var(--warn);font-weight:700}
+  a.book{color:var(--accent2);text-decoration:none;font-weight:600}
+  a.book:hover{text-decoration:underline}
+  .leg{display:flex;gap:10px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap}
+  .leg .idx{color:var(--muted);font-weight:700;width:20px}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+           border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;
+           vertical-align:-2px;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty{color:var(--muted);padding:24px;text-align:center}
+  .leg-group h3{margin:22px 0 6px;font-size:14px}
+  .pathcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px;background:var(--panel2)}
+  .phead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;
+         padding-bottom:8px;border-bottom:1px dashed var(--line)}
+  .phead b{font-size:15px}
+  .hop{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 0}
+  .hop .times{font-weight:700;min-width:150px}
+  .hop .route{color:var(--muted);min-width:80px}
+  .layover{color:var(--warn);font-size:12px;padding:2px 0 2px 18px;font-style:italic}
+</style>
+</head>
+<body>
+<header>
+  <h1>GO WILD Finder</h1>
+  <span class="tag">FRONTIER · 1-WAY</span>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-mode="oneway">One-Way Search</div>
+    <div class="tab" data-mode="builder">Route Builder</div>
+  </div>
+
+  <!-- ONE-WAY -->
+  <div id="oneway" class="card">
+    <div class="row">
+      <div class="field">
+        <label>From</label>
+        <input id="ow-from" list="airports" placeholder="DFW" value="DFW" />
+      </div>
+      <div class="field">
+        <label>To</label>
+        <input id="ow-to" list="airports" placeholder="SAN" value="SAN" />
+      </div>
+      <label class="check" title="Search every nonstop destination from origin">
+        <input type="checkbox" id="ow-any" /> Anywhere
+      </label>
+      <label class="check" id="thorough-wrap" title="Anywhere: use the complete live fan-out instead of the fast cached source (slower, more results)" style="display:none">
+        <input type="checkbox" id="ow-thorough" /> Thorough
+      </label>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="ow-date" value="2026-06-11" />
+      </div>
+      <button class="btn" id="ow-search">Search</button>
+    </div>
+
+    <div class="filters">
+      <div class="row">
+        <label class="check"><input type="checkbox" id="f-gw" checked /> GO WILD only</label>
+        <label class="check"><input type="checkbox" id="f-ns" /> Nonstop only</label>
+        <label class="check"><input type="checkbox" id="f-no-over" /> No overnight</label>
+        <div class="field">
+          <label>Max layover (hrs)</label>
+          <input type="number" id="f-maxlay" min="0" step="0.5" placeholder="any" style="width:90px"/>
+        </div>
+        <div class="field">
+          <label>Max trip (hrs)</label>
+          <input type="number" id="f-maxdur" min="0" step="0.5" placeholder="any" style="width:90px"/>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div class="field">
+          <label>Depart between</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="time" id="f-dep-a" /><span class="small">–</span><input type="time" id="f-dep-b" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Arrive between</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="time" id="f-arr-a" /><span class="small">–</span><input type="time" id="f-arr-b" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Sort by</label>
+          <select id="f-sort">
+            <option value="dep">Departure time</option>
+            <option value="duration">Trip duration</option>
+            <option value="layover">Layover length</option>
+            <option value="seats">GO WILD seats</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="ow-status"></div>
+    <div id="ow-results"></div>
+  </div>
+
+  <!-- ROUTE BUILDER (path discovery) -->
+  <div id="builder" class="card" style="display:none">
+    <p class="small" style="margin-top:0">Find <b>every</b> GO WILD way to get from A to B on a date —
+       nonstop, Frontier's own connections, and <b>self-transfers</b> stitched through hubs as
+       separate one-way GO WILD tickets (including overnight-at-hub).</p>
+    <div class="row">
+      <div class="field"><label>From</label><input id="pf-from" list="airports" value="DFW"/></div>
+      <div class="field"><label>To</label><input id="pf-to" list="airports" value="SAN"/></div>
+      <div class="field"><label>Date</label><input type="date" id="pf-date" value="2026-06-11"/></div>
+      <div class="field"><label>Max stops</label>
+        <select id="pf-stops">
+          <option value="0">Nonstop</option>
+          <option value="1" selected>1 stop</option>
+          <option value="2">2 stops</option>
+        </select>
+      </div>
+      <button class="btn" id="pf-search">Find paths</button>
+    </div>
+    <div class="filters">
+      <div class="row">
+        <div class="field"><label>Min connection (min)</label>
+          <input type="number" id="pf-minconn" value="90" min="0" step="15" style="width:120px"/></div>
+        <div class="field"><label>Max connection (hrs)</label>
+          <input type="number" id="pf-maxconn" value="24" min="1" step="1" style="width:120px"/></div>
+        <label class="check"><input type="checkbox" id="pf-noover"/> No overnight</label>
+        <div class="field"><label>Sort by</label>
+          <select id="pf-sort">
+            <option value="fastest">Fastest</option>
+            <option value="cheapest">Cheapest</option>
+            <option value="fewest_stops">Fewest stops</option>
+            <option value="most_seats">Most GO WILD seats</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="pf-status"></div>
+    <div id="pf-results"></div>
+  </div>
+</div>
+
+<datalist id="airports"></datalist>
+
+<script>
+const $ = s => document.querySelector(s);
+// Resolve a base so the app works whether served by the API or opened as a file://.
+const API_BASE = (location.protocol === "file:" || location.origin === "null")
+  ? "http://127.0.0.1:8011" : "";
+const api = (p,o) => fetch(API_BASE + p, o).then(r=>r.json());
+const toMin = t => t ? (+t.split(":")[0]*60 + +t.split(":")[1]) : null;
+const fmtMin = m => `${Math.floor(m/60)}h ${String(m%60).padStart(2,"0")}m`;
+
+let AIRPORTS = {};
+api("/api/airports").then(list=>{
+  const dl = $("#airports");
+  list.forEach(a=>{
+    AIRPORTS[a.code]=a.name;
+    const o=document.createElement("option");
+    o.value=a.code; o.label=a.name; dl.appendChild(o);
+  });
+});
+// Full airport name for a code (falls back to the code itself).
+const airportName = c => AIRPORTS[c] && AIRPORTS[c]!==c ? `${AIRPORTS[c]} (${c})` : c;
+// Render a code as a hoverable chip that reveals the full name on hover.
+const ac = c => `<span class="apt" title="${airportName(c)}">${c}</span>`;
+
+// ---- tabs ----
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  const m=t.dataset.mode;
+  $("#oneway").style.display = m==="oneway"?"block":"none";
+  $("#builder").style.display = m==="builder"?"block":"none";
+});
+
+// "Anywhere" disables the To field and reveals the Thorough toggle
+$("#ow-any").onchange = e => {
+  $("#ow-to").disabled = e.target.checked;
+  if(e.target.checked) $("#ow-to").value="";
+  $("#thorough-wrap").style.display = e.target.checked ? "flex" : "none";
+};
+
+function filtersFromUI(){
+  return {
+    gowild_only: $("#f-gw").checked,
+    nonstop_only: $("#f-ns").checked,
+    no_overnight: $("#f-no-over").checked,
+    max_layover_min: $("#f-maxlay").value ? Math.round(+$("#f-maxlay").value*60) : null,
+    max_duration_min: $("#f-maxdur").value ? Math.round(+$("#f-maxdur").value*60) : null,
+    dep_after: toMin($("#f-dep-a").value),
+    dep_before: toMin($("#f-dep-b").value),
+    arr_after: toMin($("#f-arr-a").value),
+    arr_before: toMin($("#f-arr-b").value),
+  };
+}
+
+function badges(it){
+  let b=`<span class="badge ${it.go_wild?'b-gw':''}">${it.go_wild?'GO WILD':'—'}</span>`;
+  if(it.stops===0) b+=` <span class="badge b-ns">NONSTOP</span>`;
+  if(it.overnight) b+=` <span class="badge b-over">OVERNIGHT</span>`;
+  if(it.has_six_plus_layover) b+=` <span class="badge b-lay">6h+ LAYOVER</span>`;
+  return b;
+}
+
+function row(it){
+  const seats = it.go_wild_seats_label || (it.go_wild_seats!=null?`${it.go_wild_seats} left`:"");
+  const lay = it.stops>0 ? fmtMin(it.max_layover_min) : "—";
+  const fare = it.go_wild_fare!=null ? `$${it.go_wild_fare.toFixed(2)}` : "—";
+  return `<tr>
+    <td class="times">${it.dep_label} → ${it.arr_label}</td>
+    <td class="route">${ac(it.origin)} → ${ac(it.dest)}</td>
+    <td>${it.stops_text}</td>
+    <td>${fmtMin(it.duration_min)}</td>
+    <td>${lay}</td>
+    <td>${badges(it)}</td>
+    <td>${fare}</td>
+    <td class="seats">${seats}</td>
+    <td><a class="book" href="${it.book_url}" target="_blank">Book ↗</a></td>
+  </tr>`;
+}
+
+function table(results){
+  if(!results.length) return `<div class="empty">No itineraries match these filters.</div>`;
+  return `<table><thead><tr>
+    <th>Times</th><th>Route</th><th>Stops</th><th>Trip</th><th>Max layover</th>
+    <th>Flags</th><th>GO WILD fare</th><th>Seats</th><th></th>
+  </tr></thead><tbody>${results.map(row).join("")}</tbody></table>`;
+}
+
+// ---- one-way search ----
+$("#ow-search").onclick = async ()=>{
+  const btn=$("#ow-search"); btn.disabled=true;
+  const any=$("#ow-any").checked;
+  const origin=$("#ow-from").value.trim().toUpperCase();
+  const body={
+    origin,
+    destination: any ? "ANY" : $("#ow-to").value.trim().toUpperCase(),
+    date: $("#ow-date").value,
+    filters: filtersFromUI(),
+    sort: $("#f-sort").value,
+    thorough: any && $("#ow-thorough").checked,
+  };
+  $("#ow-status").innerHTML = `<span class="spinner"></span>Searching ${any?`everywhere from ${origin}`:`${origin} → ${body.destination}`}…`;
+  $("#ow-results").innerHTML="";
+  try{
+    const data=await api("/api/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    $("#ow-status").innerHTML = `Searched <b>${data.destinations_searched}</b> route(s) · `+
+      `<b>${data.gowild_found}</b> GO WILD found · showing <b>${data.shown}</b>`+
+      (data.errors?` · ${data.errors} route(s) errored`:"")+
+      ` · <span class="small">source: ${data.source}</span>`;
+    $("#ow-results").innerHTML=table(data.results);
+  }catch(e){
+    $("#ow-status").innerHTML=`<span style="color:var(--danger)">Error: ${e}</span>`;
+  }
+  btn.disabled=false;
+};
+
+// ---- route builder (path discovery) ----
+const KIND = {
+  "direct":              ["NONSTOP", "b-ns"],
+  "frontier-connection": ["1-TICKET CONNECTION", "b-gw"],
+  "self-transfer":       ["SELF-TRANSFER", "b-over"],
+};
+function kindBadge(k){ const [t,c]=KIND[k]||[k,""]; return `<span class="badge ${c}">${t}</span>`; }
+
+function pathCard(p){
+  const hops = p.hops.map((h,i)=>{
+    const seats = h.go_wild_seats_label || (h.go_wild_seats!=null?`${h.go_wild_seats} left`:"");
+    const fare = h.go_wild_fare!=null ? `$${h.go_wild_fare.toFixed(2)}` : "—";
+    let s = `<div class="hop">
+        <span class="times">${h.dep_label} → ${h.arr_label}</span>
+        <span class="route">${ac(h.origin)}→${ac(h.dest)}</span>
+        <span class="small">F9${h.legs[0].flight_number} · ${fare}${seats?` · <span class="seats">${seats}</span>`:""}</span>
+        <a class="book" href="${h.book_url}" target="_blank">book ↗</a>
+      </div>`;
+    if(i < p.layovers.length){
+      const l = p.layovers[i];
+      s += `<div class="layover">↳ ${fmtMin(l.minutes)} in <b>${ac(l.airport)}</b>${l.overnight?' · 🌙 overnight':''}</div>`;
+    }
+    return s;
+  }).join("");
+  const tickets = p.transfers ? ` · ${p.transfers+1} separate tickets` : "";
+  return `<div class="pathcard">
+    <div class="phead">${kindBadge(p.kind)} <b>${ac(p.origin)} → ${ac(p.dest)}</b>
+      <span class="small">${p.flights} flight${p.flights>1?'s':''}${tickets} · ${fmtMin(p.total_duration_min)} · $${p.total_fees.toFixed(2)}${p.min_seats!=null?` · ${p.min_seats} seats`:''}${p.overnight?' · overnight':''}</span>
+    </div>${hops}</div>`;
+}
+
+$("#pf-search").onclick = async ()=>{
+  const btn=$("#pf-search"); btn.disabled=true;
+  const body={
+    origin: $("#pf-from").value.trim().toUpperCase(),
+    dest:   $("#pf-to").value.trim().toUpperCase(),
+    date:   $("#pf-date").value,
+    max_stops: +$("#pf-stops").value,
+    min_conn:  +$("#pf-minconn").value,
+    max_conn:  Math.round((+$("#pf-maxconn").value)*60),
+    no_overnight: $("#pf-noover").checked,
+    sort: $("#pf-sort").value,
+  };
+  $("#pf-status").innerHTML=`<span class="spinner"></span>Discovering all paths ${body.origin} → ${body.dest}… (scanning hubs live — can take 20–40s)`;
+  $("#pf-results").innerHTML="";
+  try{
+    const d=await api("/api/paths",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const kinds=Object.entries(d.by_kind||{}).map(([k,v])=>`${v} ${k}`).join(" · ")||"none";
+    $("#pf-status").innerHTML=`<b>${d.paths_found}</b> paths — ${kinds}`+
+      ` · <span class="small">${d.segments_fetched} segments scanned, ${d.segments_pruned_no_service} pruned`+
+      `${d.truncated?' · search truncated (raise limits)':''}${d.segment_errors?` · ${d.segment_errors} errored`:''}</span>`;
+    $("#pf-results").innerHTML = d.paths.length
+      ? d.paths.map(pathCard).join("")
+      : `<div class="empty">No GO WILD paths found for these settings. Try raising max stops or the connection window.</div>`;
+  }catch(e){
+    $("#pf-status").innerHTML=`<span style="color:var(--danger)">Error: ${e}</span>`;
+  }
+  btn.disabled=false;
+};
+</script>
+</body>
+</html>
