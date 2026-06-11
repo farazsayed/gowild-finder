@@ -1,7 +1,7 @@
 # GO WILD Finder
 
-A one-way flight finder for Frontier Airlines' **GO WILD!** all-you-can-fly pass,
-inspired by gopassflights.com. Focused on **one-way** trips for now.
+A one-way flight finder for Frontier Airlines' **GO WILD!** all-you-can-fly pass.
+Focused on **one-way** trips for now.
 
 ## ▶ Launch
 
@@ -32,9 +32,9 @@ python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt && ./.venv/
 A demand-driven, multi-day graph search, cheap-to-expensive so it never blind-fetches:
 1. **Topological prune** — enumerate only hub paths that physically exist in the
    nonstop route graph (`O→X→D` where both hops are real Frontier routes).
-2. **Service pre-filter** — `/Flight/RetrieveSchedule` (tiny JSON, no Akamai) drops
-   route+date combos with no service before any heavy scrape.
-3. **Live-scrape** the surviving segments (completeness matters here), keeping the
+2. **Schedule pre-filter** — a lightweight check drops route+date combos with no
+   service before any heavier lookups.
+3. **Fetch** the surviving segments live (completeness matters here), keeping the
    nonstop GO WILD flights as atomic "hops".
 4. **Assemble** concrete paths via BFS, allowing a connection to spill to a **later
    day** (overnight-at-hub) within the max-connection window.
@@ -50,51 +50,33 @@ through-ticket is de-duplicated in favor of the single ticket.
 > standalone self-transfer paths are uncommon — the engine surfaces them only when
 > they're genuinely distinct from (or cheaper than) a bundled connection.
 
-## How it works — hybrid data source
-There are two ways to get GO WILD data; the app picks per search type.
-
-**A) Live scrape (source of truth) — `frontier.py`.** Frontier's site is powered by
-an undocumented Navitaire SkySales endpoint:
-
-```
-GET https://booking.flyfrontier.com/Flight/InternalSelect
-    ?o1=<ORIGIN>&d1=<DEST>&dd1=<Mon-DD, YYYY>&ADT=1&mon=true&promo=
-```
-
-It returns HTML with an embedded JSON `journeys` array. Each flight exposes
-`isGoWildFareEnabled`, `goWildFare`, `goWildFareSeatsRemaining`, per-leg times,
-`stopsText`, `hasSixPlusLayover`, and `isNextDayArrival` — everything the filters
-need. Frontier sits behind Akamai, so we use **curl_cffi** (Chrome TLS
-impersonation) and warm the session against `www.flyfrontier.com` first.
-
-**B) Fast path (gopassflights) — `gopass.py`.** gopassflights.com's own backend
-already scrapes the same InternalSelect server-side and caches it, exposed via a
-public Socket.IO endpoint (`wss://api.gopassflights.com:2443`). One `emit("get")`
-returns the entire "anywhere" map in ~4s. It's faster but **~half-complete** (its
-cache drops some bookable GO WILD flights), so we don't trust it for booking.
+## How it works
+GO WILD availability is read from Frontier's public booking site and normalized into
+a common itinerary shape (`frontier.py`). An optional faster path can pull from an
+external cached source when available (`gopass.py`); the app falls back to the live
+read for completeness and freshness. Each response reports which `source` it used,
+shown in the UI status line.
 
 **Routing rule (in `app.py`):**
 | Search | Primary | Fallback |
 |---|---|---|
-| Specific route (DFW→SAN) | live scrape (complete + fresh) | gopassflights |
-| Anywhere | gopassflights (fast, one call) | live fan-out |
-| Anywhere + **Thorough** toggle | live fan-out (all destinations) | — |
+| Specific route (e.g. DFW→SAN) | live read (most complete + fresh) | fast source |
+| Anywhere | fast source (one call) | live fan-out |
+| Anywhere + **Thorough** toggle | full live fan-out | — |
 
-Each response includes a `source` field, shown in the UI status line.
-
-The full nonstop route network is embedded in the booking page (a `stations`
-array); `routegraph.py` extracts and caches it to `routes.json` to power "Anywhere".
+The nonstop route network that powers "Anywhere" and the route builder is derived
+once and cached to `routes.json` by `routegraph.py`.
 
 ## Files
 | File | Purpose |
 |---|---|
-| `frontier.py` | Live scrape — fetch + parse InternalSelect; `has_service` pre-filter |
-| `gopass.py` | Fast path — gopassflights Socket.IO client, same `Itinerary` shape |
+| `frontier.py` | Live data read + parse into `Itinerary` objects; schedule pre-filter |
+| `gopass.py` | Optional fast external data source (same `Itinerary` shape) |
 | `pathfinder.py` | Route-builder path discovery (multi-day BFS over the route graph) |
-| `routegraph.py` | Build/cache Frontier's nonstop route graph (`routes.json`) |
+| `routegraph.py` | Build/cache the nonstop route graph (`routes.json`) |
 | `app.py` | FastAPI backend — `/api/search`, `/api/paths`, `/api/airports`, `/api/destinations` |
 | `static/index.html` | Single-page UI (one-way search + route builder, filters) |
-| `probe.py` | Standalone validation script for the endpoint |
+| `probe.py` | Standalone data-source validation script |
 
 CLI test for the path engine:
 ```bash
@@ -140,7 +122,13 @@ Same day, ~$84 cheaper. Sort the Route Builder by **Cheapest** to put these firs
 (The scan found self-transfers on 7 of 20 sampled DFW routes.)
 
 ## Caveats
-- Scrapes an undocumented endpoint; the JSON shape can change without notice
-  (the parser is defensive). Rate-limit the "Anywhere" fan-out responsibly.
-- "Anywhere" fans out one request per nonstop destination (~107 for DFW); the
-  backend uses bounded concurrency (~13s for DFW) with one warmed session per worker.
+- The data source is unofficial and its shape can change without notice (the parser
+  is defensive). Be considerate with request volume — especially "Anywhere," which
+  fans out one lookup per nonstop destination (~107 for DFW) using bounded concurrency.
+
+## Disclaimer
+Personal, educational project — **not affiliated with, authorized, or endorsed by
+Frontier Airlines**. "GO WILD!" and "Frontier" are trademarks of their respective
+owner. Read-only and for personal use; please use responsibly and in accordance with
+the relevant sites' terms of service, and always confirm prices and book on Frontier's
+official site. No warranty — prices and availability change constantly.
