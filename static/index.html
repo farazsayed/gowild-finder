@@ -52,6 +52,16 @@
   .route{color:var(--muted)}
   .apt{border-bottom:1px dotted var(--muted);cursor:help}
   .apt:hover{color:var(--accent2);border-bottom-color:var(--accent2)}
+  .ref{margin-top:28px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;
+       background:var(--panel2);font-size:13px;line-height:1.7}
+  .ref strong{color:var(--text)}
+  .ref-row{margin-top:8px}
+  .ref a{color:var(--accent2);text-decoration:none;font-weight:700}
+  .ref a:hover{text-decoration:underline}
+  .ref code{background:var(--chip);padding:1px 6px;border-radius:5px;color:var(--warn);
+            border:1px solid var(--line)}
+  .ref .muted{color:var(--muted)}
+  .ref .tiny{font-size:11px;margin-top:10px}
   .badge{display:inline-block;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:700}
   .b-gw{background:var(--accent);color:#04110a}
   .b-over{background:#3a2a12;color:var(--warn)}
@@ -194,6 +204,20 @@
     <div class="status" id="pf-status"></div>
     <div id="pf-results"></div>
   </div>
+
+  <!-- Referral footer — replace the placeholders below with your codes/links -->
+  <footer class="ref">
+    <strong>✈ Get the most out of this tool</strong> — it's built for the GO WILD! pass.
+    <div class="ref-row">
+      <a href="https://www.flyfrontier.com/deals/gowild-pass/" target="_blank" rel="noopener">Get a GO WILD! pass</a>
+      <span class="muted">· referral code <code id="ref-code">[your FRONTIER Miles #]</code> (referrer earns Frontier vouchers during promo windows)</span>
+    </div>
+    <div class="ref-row">
+      <a id="ref-card" href="https://www.flyfrontier.com/mastercard" target="_blank" rel="noopener">Frontier World Mastercard</a>
+      <span class="muted">— signup bonus + up to 15× miles on Frontier; helps cover GO WILD taxes/fees</span>
+    </div>
+    <div class="muted tiny">Not affiliated with Frontier Airlines. Offers and referral windows change — confirm on flyfrontier.com.</div>
+  </footer>
 </div>
 
 <datalist id="airports"></datalist>

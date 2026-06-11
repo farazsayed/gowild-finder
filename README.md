@@ -28,6 +28,31 @@ python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt && ./.venv/
 - **Airport names on hover** — hover any 3-letter code (results, route cards,
   layovers) to reveal the full city/state, e.g. `DFW → "Dallas/Ft. Worth, TX (DFW)"`.
 
+## ✈️ Getting the most out of it — the pass + the card
+This tool is built around the **GO WILD! pass**: a flat monthly/annual fee for
+all-you-can-fly. The hard part of GO WILD is *finding which routes and dates actually
+have seats* — that's exactly what this does, including cheaper self-transfer routings a
+normal search hides. If you're going to fly Frontier a lot, pairing it with the pass
+(and the co-brand card for the taxes/fees you still pay) is where it pays for itself.
+
+**GO WILD! pass — referral.** During pass-launch promo windows, a new passholder can
+enter an existing member's **FRONTIER Miles number** as a referral code; the referrer
+earns Frontier vouchers (recently **$25 per referral, up to $250**). If you sign up,
+use mine:
+
+> **GO WILD referral code (FRONTIER Miles #):** `<<YOUR_FRONTIER_MILES_NUMBER>>`
+> Sign up → https://www.flyfrontier.com/deals/gowild-pass/
+
+**Frontier World Mastercard.** Pairs naturally with GO WILD — a sizable signup bonus,
+up to **15× miles** on Frontier purchases, and annual perks that help offset the
+taxes/fees GO WILD segments still carry. Apply with my link:
+
+> **Card referral / apply:** `<<YOUR_CARD_REFERRAL_LINK>>`
+> (public page if you don't use a referral: https://www.flyfrontier.com/mastercard)
+
+> *Referral terms, voucher amounts, and promo windows change frequently — always
+> confirm the current offer on Frontier's site before signing up.*
+
 ## Route Builder — how path discovery works (`pathfinder.py`)
 A demand-driven, multi-day graph search, cheap-to-expensive so it never blind-fetches:
 1. **Topological prune** — enumerate only hub paths that physically exist in the
