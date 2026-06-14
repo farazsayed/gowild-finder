@@ -5,11 +5,18 @@ Focused on **one-way** trips for now.
 
 ## ▶ Launch
 
+Run these commands **from inside the `gowild-finder/` folder** (the one containing
+`app.py`). The `./.venv/...` paths are relative, so running from anywhere else gives
+`zsh: no such file or directory: ./.venv/bin/python`.
+
 ```bash
-./.venv/bin/python -m uvicorn app:app --port 8011    # then open http://127.0.0.1:8011
+cd gowild-finder        # the project folder (where this README and app.py live)
+./.venv/bin/python -m uvicorn app:app --port 8011
 ```
 
-First-time setup (creates the venv, installs deps, builds the route graph):
+Then open **http://127.0.0.1:8011**
+
+First-time setup (same folder — creates the venv, installs deps, builds the route graph):
 
 ```bash
 python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt && ./.venv/bin/python routegraph.py
@@ -83,18 +90,12 @@ CLI test for the path engine:
 ./.venv/bin/python pathfinder.py DFW SAN 2026-06-11 1   # origin dest date max_stops
 ```
 
-## Run
-```bash
-python3 -m venv .venv
-./.venv/bin/pip install -r requirements.txt
-./.venv/bin/python routegraph.py          # build routes.json (first run)
-./.venv/bin/python -m uvicorn app:app --port 8011
-# open http://127.0.0.1:8011
-```
+## CLI smoke test
+Setup and launch are at the top ([▶ Launch](#-launch)). All commands run **from the
+`gowild-finder/` folder**:
 
-CLI smoke test:
 ```bash
-./.venv/bin/python frontier.py DFW SAN 2026-06-11
+./.venv/bin/python frontier.py DFW SAN 2026-06-11        # one-way data-source check
 ```
 
 ## GO WILD booking-window notes
